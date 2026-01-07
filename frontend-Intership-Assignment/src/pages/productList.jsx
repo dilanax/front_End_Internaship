@@ -1,73 +1,87 @@
 import { useEffect, useState } from "react";
 
-// Mock data and services for demo
-const mockProducts = [
-  { id: 1, title: "Wireless Headphones", category: "electronics", price: 89.99, image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop" },
-  { id: 2, title: "Smart Watch", category: "electronics", price: 199.99, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop" },
-  { id: 3, title: "Leather Jacket", category: "clothing", price: 149.99, image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop" },
-  { id: 4, title: "Running Shoes", category: "clothing", price: 79.99, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop" },
-  { id: 5, title: "Coffee Maker", category: "home", price: 69.99, image: "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=400&h=400&fit=crop" },
-  { id: 6, title: "Desk Lamp", category: "home", price: 39.99, image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400&h=400&fit=crop" },
-];
+// API Service
+const fetchProducts = async () => {
+  const response = await fetch('https://fakestoreapi.com/products');
+  if (!response.ok) throw new Error('Failed to fetch products');
+  return response.json();
+};
 
-const fetchProducts = () => Promise.resolve(mockProducts);
-const isRecommended = (product, avg) => product.price < avg * 0.9;
+// Utility functions
+const isRecommended = (product, avgPrice) => {
+  return product.rating.rate > 4 || product.price < avgPrice;
+};
+
+const saveFavoritesToStorage = (favorites) => {
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+};
+
+const loadFavoritesFromStorage = () => {
+  const stored = localStorage.getItem('favorites');
+  return stored ? JSON.parse(stored) : [];
+};
 
 // Loader Component
-const Loader = () => (
-  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+const Loader = ({ darkMode }) => (
+  <div className={`flex items-center justify-center min-h-screen ${darkMode ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' : 'bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50'}`}>
     <div className="relative">
-      <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-      <div className="mt-4 text-purple-600 font-semibold">Loading products...</div>
+      <div className={`w-16 h-16 border-4 ${darkMode ? 'border-purple-400 border-t-purple-600' : 'border-purple-200 border-t-purple-600'} rounded-full animate-spin`}></div>
+      <div className={`mt-4 ${darkMode ? 'text-purple-400' : 'text-purple-600'} font-semibold`}>Loading products...</div>
     </div>
   </div>
 );
 
 // ProductCard Component
-const ProductCard = ({ product, isFavorite, toggleFavorite, recommended }) => (
-  <div className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-    {/* Recommended Badge */}
+const ProductCard = ({ product, isFavorite, toggleFavorite, recommended, darkMode }) => (
+  <div className={`group relative ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2`}>
     {recommended && (
       <div className="absolute top-4 left-4 z-10 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
-        ⭐ Best Deal
+        ⭐ Recommended
       </div>
     )}
     
-    {/* Favorite Button */}
     <button
       onClick={() => toggleFavorite(product.id)}
-      className="absolute top-4 right-4 z-10 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+      className={`absolute top-4 right-4 z-10 w-10 h-10 ${darkMode ? 'bg-gray-700' : 'bg-white'} rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110`}
     >
       <span className={`text-2xl transition-all ${isFavorite ? 'scale-125' : 'scale-100'}`}>
         {isFavorite ? '❤️' : '🤍'}
       </span>
     </button>
 
-    {/* Image */}
-    <div className="relative h-64 overflow-hidden bg-gradient-to-br from-purple-100 to-blue-100">
+    <div className={`relative h-64 overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gradient-to-br from-purple-100 to-blue-100'}`}>
       <img
         src={product.image}
         alt={product.title}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
     </div>
 
-    {/* Content */}
     <div className="p-6">
-      <div className="inline-block px-3 py-1 mb-3 text-xs font-semibold text-purple-600 bg-purple-100 rounded-full">
+      <div className={`inline-block px-3 py-1 mb-3 text-xs font-semibold ${darkMode ? 'text-purple-300 bg-purple-900' : 'text-purple-600 bg-purple-100'} rounded-full`}>
         {product.category}
       </div>
       
-      <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+      <h3 className={`text-lg font-bold ${darkMode ? 'text-gray-100' : 'text-gray-800'} mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors min-h-[3.5rem]`}>
         {product.title}
       </h3>
+      
+      <div className="flex items-center gap-1 mb-3">
+        <span className="text-yellow-400">⭐</span>
+        <span className={`text-sm font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          {product.rating.rate}
+        </span>
+        <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          ({product.rating.count} reviews)
+        </span>
+      </div>
       
       <div className="flex items-center justify-between mt-4">
         <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
           ${product.price}
         </div>
-        <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+        <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm">
           Add to Cart
         </button>
       </div>
@@ -83,6 +97,10 @@ function ProductList() {
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("");
   const [favorites, setFavorites] = useState([]);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   useEffect(() => {
     fetchProducts()
@@ -91,12 +109,26 @@ function ProductList() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    setFavorites(loadFavoritesFromStorage());
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
   const toggleFavorite = (id) => {
-    setFavorites(prev =>
-      prev.includes(id)
+    setFavorites(prev => {
+      const newFavorites = prev.includes(id)
         ? prev.filter(f => f !== id)
-        : [...prev, id]
-    );
+        : [...prev, id];
+      saveFavoritesToStorage(newFavorites);
+      return newFavorites;
+    });
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(prev => !prev);
   };
 
   const categories = ["all", ...new Set(products.map(p => p.category))];
@@ -116,54 +148,61 @@ function ProductList() {
     filteredProducts.sort((a, b) => b.price - a.price);
   }
 
-  if (loading) return <Loader />;
+  if (loading) return <Loader darkMode={darkMode} />;
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50">
+    <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gradient-to-br from-gray-900 to-red-900' : 'bg-gradient-to-br from-red-50 to-pink-50'}`}>
       <div className="text-center">
         <div className="text-6xl mb-4">😕</div>
-        <p className="text-red-600 text-xl font-semibold">{error}</p>
+        <p className={`${darkMode ? 'text-red-400' : 'text-red-600'} text-xl font-semibold`}>{error}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white shadow-lg sticky top-0 z-20 backdrop-blur-lg bg-opacity-90">
+    <div className={`min-h-screen ${darkMode ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' : 'bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50'} transition-colors duration-300`}>
+      <div className={`${darkMode ? 'bg-gray-800 bg-opacity-95' : 'bg-white bg-opacity-90'} shadow-lg sticky top-0 z-20 backdrop-blur-lg transition-colors duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
+            <h1 className={`text-4xl font-bold ${darkMode ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600'}`}>
               🛍️ Premium Store
             </h1>
             <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full">
-                <span className="text-purple-600 font-semibold">{filteredProducts.length}</span>
-                <span className="text-gray-600 text-sm">Products</span>
+              <button
+                onClick={toggleDarkMode}
+                className={`p-3 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-purple-100 hover:bg-purple-200'} transition-all duration-300 transform hover:scale-110`}
+                title="Toggle dark mode"
+              >
+                <span className="text-2xl">{darkMode ? '☀️' : '🌙'}</span>
+              </button>
+              <div className={`hidden md:flex items-center gap-2 px-4 py-2 ${darkMode ? 'bg-purple-900' : 'bg-purple-100'} rounded-full`}>
+                <span className={`${darkMode ? 'text-purple-300' : 'text-purple-600'} font-semibold`}>{filteredProducts.length}</span>
+                <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Products</span>
               </div>
               {favorites.length > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-pink-100 rounded-full">
+                <div className={`flex items-center gap-2 px-4 py-2 ${darkMode ? 'bg-pink-900' : 'bg-pink-100'} rounded-full`}>
                   <span className="text-xl">❤️</span>
-                  <span className="text-pink-600 font-semibold">{favorites.length}</span>
+                  <span className={`${darkMode ? 'text-pink-300' : 'text-pink-600'} font-semibold`}>{favorites.length}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Controls */}
           <div className="flex flex-col md:flex-row gap-3">
             <div className="flex-1 relative">
               <input
                 type="text"
                 placeholder="🔍 Search amazing products..."
-                className="w-full px-6 py-3 pl-12 rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all"
+                className={`w-full px-6 py-3 pl-12 rounded-2xl border-2 ${darkMode ? 'bg-gray-700 border-purple-500 text-gray-100 placeholder-gray-400' : 'bg-white border-purple-200 text-gray-900'} focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all`}
                 onChange={e => setSearch(e.target.value)}
+                value={search}
               />
               <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl">🔍</span>
             </div>
 
             <select
-              className="px-6 py-3 rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 bg-white font-semibold text-gray-700 cursor-pointer transition-all hover:shadow-md"
+              className={`px-6 py-3 rounded-2xl border-2 ${darkMode ? 'bg-gray-700 border-purple-500 text-gray-100' : 'bg-white border-purple-200 text-gray-700'} focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 font-semibold cursor-pointer transition-all hover:shadow-md`}
               onChange={e => setCategory(e.target.value)}
+              value={category}
             >
               {categories.map(c => (
                 <option key={c} value={c}>
@@ -173,8 +212,9 @@ function ProductList() {
             </select>
 
             <select
-              className="px-6 py-3 rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 bg-white font-semibold text-gray-700 cursor-pointer transition-all hover:shadow-md"
+              className={`px-6 py-3 rounded-2xl border-2 ${darkMode ? 'bg-gray-700 border-purple-500 text-gray-100' : 'bg-white border-purple-200 text-gray-700'} focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 font-semibold cursor-pointer transition-all hover:shadow-md`}
               onChange={e => setSort(e.target.value)}
+              value={sort}
             >
               <option value="">💰 Sort by price</option>
               <option value="low">📈 Low → High</option>
@@ -184,13 +224,12 @@ function ProductList() {
         </div>
       </div>
 
-      {/* Products Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-8xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-700 mb-2">No products found</h3>
-            <p className="text-gray-500">Try adjusting your filters or search term</p>
+            <h3 className={`text-2xl font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>No products found</h3>
+            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Try adjusting your filters or search term</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -201,16 +240,18 @@ function ProductList() {
                 isFavorite={favorites.includes(product.id)}
                 toggleFavorite={toggleFavorite}
                 recommended={isRecommended(product, averagePrice)}
+                darkMode={darkMode}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="bg-white mt-12 py-8 border-t border-gray-200">
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} mt-12 py-8 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-300`}>
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-600">Made with 💜 for your interview</p>
+          <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Built with React + Vite + Tailwind CSS
+          </p>
         </div>
       </div>
     </div>
