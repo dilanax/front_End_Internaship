@@ -1,16 +1,54 @@
-# React + Vite
+# Product Listing Web App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive product listing web application built using React (Vite) and Tailwind CSS.  
+The app fetches products from a public API and allows users to search, filter, sort, and manage favorite products.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠 Tech Stack
+- React (Vite)
+- Tailwind CSS
+- JavaScript (ES6+)
+- Git & GitHub
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ⚙️ Setup Steps
 
-## Expanding the ESLint configuration
+1. Clone the repository
+```bash
+git clone https://github.com/dilanax/front_End_Internaship.git
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. Go to the project folder
+
+cd your-repo-name
+
+
+3.Install dependencies
+
+npm install
+
+
+4.Run the project
+
+npm run dev
+
+
+#Features List
+
+Fetch data from a public API
+
+Display product image, title, price, category, and rating
+
+Search products by name
+
+Filter products by category
+
+Sort products by price
+
+Add and remove favorite products
+
+Responsive UI using Tailwind CSS
+
+#AI Tools Usage
+ChatGpt
